@@ -1,0 +1,18 @@
+[project]
+name = "mcp-serial-hid-kvm"
+version = "0.1.0"
+description = "MCP server for KVM control — thin client for serial-hid-kvm"
+requires-python = ">=3.10"
+dependencies = [
+    "serial-hid-kvm",
+    "mcp>=1.0.0",
+    "pillow>=10.0.0",
+    "pytesseract>=0.3.10",
+]
+
+[project.scripts]
+mcp-serial-hid-kvm = "mcp_serial_hid_kvm.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
