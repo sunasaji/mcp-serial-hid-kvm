@@ -22,10 +22,10 @@ class Config:
         self.kvm_port: int = int(os.environ.get("SHKVM_API_PORT", "9329"))
 
         # Local OCR
-        self.tesseract_cmd: str | None = os.environ.get("MCP_TESSERACT_CMD")
+        self.tesseract_cmd: str | None = os.environ.get("SHKVM_OCR_CMD")
 
         # Capture log directory
-        raw = os.environ.get("MCP_CAPTURE_LOG_DIR")
+        raw = os.environ.get("SHKVM_CAPTURE_LOG_DIR")
         if raw is None:
             self.capture_log_dir: str | None = _default_capture_log_dir()
         elif raw == "":

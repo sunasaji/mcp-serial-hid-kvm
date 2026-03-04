@@ -73,8 +73,8 @@ Custom KVM server address:
 |----------|---------|-------------|
 | `SHKVM_API_HOST` | `127.0.0.1` | KVM server address |
 | `SHKVM_API_PORT` | `9329` | KVM server port |
-| `MCP_TESSERACT_CMD` | auto-detect | Path to tesseract executable |
-| `MCP_CAPTURE_LOG_DIR` | platform default | Capture log directory (empty string to disable) |
+| `SHKVM_OCR_CMD` | auto-detect | Path to tesseract executable |
+| `SHKVM_CAPTURE_LOG_DIR` | platform default | Capture log directory (empty string to disable) |
 
 Hardware settings (`SHKVM_SERIAL_PORT`, `SHKVM_SCREEN_WIDTH`, etc.) are configured on the **KVM server side**, not here. If the target PC uses a non-US keyboard, set `--target-layout` (or `SHKVM_TARGET_LAYOUT`) on the KVM server so that `type_text` and `send_key` produce correct characters.
 
