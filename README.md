@@ -84,7 +84,7 @@ Hardware settings (`SHKVM_SERIAL_PORT`, `SHKVM_SCREEN_WIDTH`, etc.) are configur
 
 | Tool | Description |
 |------|-------------|
-| `type_text` | Type text with inline tags: `ls -la{enter}`, `{ctrl+c}`, `{alt+f4}` |
+| `type_text` | Type text with inline tags: `ls -la{enter}`, `{ctrl+c}`, `{alt+f4}`. Whitelist-based: unknown `{content}` passes through literally. Raw mode (`raw=true`) disables tags, `\n` → Enter |
 | `send_key` | Single key press with modifiers |
 | `send_key_sequence` | Multiple key steps with per-step delays |
 

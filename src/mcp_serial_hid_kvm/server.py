@@ -87,13 +87,36 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="type_text",
-            description="Type a string as keyboard input on the target PC. Supports inline tags: {enter}, {tab}, {0x87} (raw HID keycode), {ctrl+c}, {shift+0x87}, etc. Use {{ / }} for literal braces. Example: \"ls -la{enter}\"",
+            description=(
+                'Type a string as keyboard input on the target PC. Supports inline tags: {enter}, {tab}, {0x87} (raw HID keycode), {ctrl+c}, {shift+0x87}, etc.\n'
+                '\n'
+                '**Whitelist-based tag parsing:** Only recognized special key names inside {braces} are interpreted as tags. '
+                'Unknown {content} (e.g. {print $1}) is passed through as literal text including the braces. '
+                'This means code with curly braces (awk, Python, shell) can be sent without escaping in most cases.\n'
+                '\n'
+                '**Escaping:** Use {{ and }} to force literal braces when they collide with a recognized tag name '
+                '(e.g. {{enter}} to type the literal text "{enter}").\n'
+                '\n'
+                '**Raw mode (raw=true):** Disables ALL tag interpretation. '
+                'Newline characters (JSON \\n) are sent as Enter key presses. '
+                'Use JSON \\\\n to type a literal backslash + n.\n'
+                '\n'
+                'Examples:\n'
+                '  "ls -la{enter}"                     → types "ls -la" then presses Enter\n'
+                '  "awk \'{print $1}\' file.txt{enter}"  → types the awk command then Enter (braces preserved)\n'
+                '  "echo {{enter}}"                    → types "echo {enter}" (escaped to avoid tag)\n'
+                '  raw=true: "ls -la\\necho hi\\n"       → types "ls -la", Enter, "echo hi", Enter'
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text with optional {tag} sequences. Plain chars use the target keyboard layout configured on the KVM server (default: US). Tags: {enter}, {tab}, {f1}-{f12}, {0xNN} for raw HID keycodes, {mod+key} for combos (ctrl+c, shift+0x87).",
+                        "description": "Text with optional {tag} sequences. Tags: {enter}, {tab}, {escape}, {backspace}, {delete}, {up}, {down}, {left}, {right}, {home}, {end}, {pageup}, {pagedown}, {space}, {f1}-{f12}, {0xNN} for raw HID keycodes. Modifiers: {ctrl+c}, {alt+f4}, {shift+tab}. Only recognized key names are treated as tags; other braces pass through literally.",
+                    },
+                    "raw": {
+                        "type": "boolean",
+                        "description": "If true, disable all {tag} interpretation. Newline chars (\\n) become Enter key presses. Default: false.",
                     },
                     "char_delay_ms": {
                         "type": "integer",
@@ -344,7 +367,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
         if name == "type_text":
             text = arguments["text"]
             char_delay = arguments.get("char_delay_ms")
-            result = client.type_text(text, char_delay)
+            raw = arguments.get("raw", False)
+            result = client.type_text(text, char_delay, raw=raw)
             return [TextContent(type="text", text=f"Typed {len(text)} characters")]
 
         elif name == "send_key":
@@ -433,7 +457,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
             command = arguments["command"]
             wait_seconds = arguments.get("wait_seconds", 1.0)
 
-            client.type_text(command)
+            # Raw mode: no tag interpretation for command text
+            client.type_text(command, raw=True)
             await asyncio.sleep(0.1)
             client.send_key("enter")
             await asyncio.sleep(wait_seconds)
