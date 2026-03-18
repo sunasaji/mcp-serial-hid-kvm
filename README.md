@@ -84,9 +84,9 @@ Hardware settings (`SHKVM_SERIAL_PORT`, `SHKVM_SCREEN_WIDTH`, etc.) are configur
 
 | Tool | Description |
 |------|-------------|
-| `type_text` | Type text with inline tags: `ls -la{enter}`, `{ctrl+c}`, `{alt+f4}`. Whitelist-based: unknown `{content}` passes through literally. Raw mode (`raw=true`) disables tags, `\n` → Enter |
+| `type_text` | Type text with inline tags: `ls -la{enter}`, `{ctrl+c}`, `{alt+f4}`. Whitelist-based: unknown `{content}` passes through literally. Raw mode (`raw=true`) disables tags; actual line breaks become Enter. `char_delay_ms`: delay between keystrokes in ms (default: 20). Only ASCII printable characters, tab, and line breaks are supported; unsupported characters (Unicode, CJK, etc.) cause an error — use base64 encoding as a workaround |
 | `send_key` | Single key press with modifiers |
-| `send_key_sequence` | Multiple key steps with per-step delays |
+| `send_key_sequence` | Multiple key steps with per-step delays. `default_delay_ms`: delay between steps in ms (default: 100); each step can override with `delay_ms` |
 
 ### Mouse
 

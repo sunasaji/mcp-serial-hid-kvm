@@ -15,16 +15,12 @@ from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import (
-    TextContent,
-    ImageContent,
-    Tool,
-)
-
+from mcp.types import ImageContent, TextContent, Tool
 from PIL import Image
+from serial_hid_kvm.client import KvmClient, KvmClientError
+from serial_hid_kvm.hid_keycodes import validate_chars
 
 from .config import config
-from serial_hid_kvm.client import KvmClient, KvmClientError
 from .ocr import TerminalOCR
 
 logging.basicConfig(level=logging.INFO)
@@ -88,7 +84,8 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="type_text",
             description=(
-                'Type a string as keyboard input on the target PC. Supports inline tags: {enter}, {tab}, {0x87} (raw HID keycode), {ctrl+c}, {shift+0x87}, etc.\n'
+                'Type a string as keyboard input on the target PC. Supports inline tags: {enter}, {tab}, {ctrl+c}, {shift+0x87}, etc. '
+                '{0xNN} sends any HID keycode by hex value (0x00-0xFF) for keys without a named tag, e.g. {0x87} = JIS ろ key (International1).\n'
                 '\n'
                 '**Whitelist-based tag parsing:** Only recognized special key names inside {braces} are interpreted as tags. '
                 'Unknown {content} (e.g. {print $1}) is passed through as literal text including the braces. '
@@ -98,14 +95,20 @@ async def list_tools() -> list[Tool]:
                 '(e.g. {{enter}} to type the literal text "{enter}").\n'
                 '\n'
                 '**Raw mode (raw=true):** Disables ALL tag interpretation. '
-                'Newline characters (JSON \\n) are sent as Enter key presses. '
-                'Use JSON \\\\n to type a literal backslash + n.\n'
+                'Actual line breaks in the input (LF, CRLF, CR) are sent as Enter key presses. '
+                'In JSON, \\n is decoded into an actual line break, so it becomes Enter. '
+                'To type a literal backslash + n, use \\\\n in JSON.\n'
                 '\n'
                 'Examples:\n'
                 '  "ls -la{enter}"                     → types "ls -la" then presses Enter\n'
                 '  "awk \'{print $1}\' file.txt{enter}"  → types the awk command then Enter (braces preserved)\n'
                 '  "echo {{enter}}"                    → types "echo {enter}" (escaped to avoid tag)\n'
-                '  raw=true: "ls -la\\necho hi\\n"       → types "ls -la", Enter, "echo hi", Enter'
+                '  raw=true: "ls -la\\necho hi\\n"       → types "ls -la", Enter, "echo hi", Enter\n'
+                '\n'
+                '**Supported characters:** ASCII printable (space through ~), tab, and newline only. '
+                'Unicode, CJK, accented characters, and control characters cause an error. '
+                'For unsupported characters or binary data, use base64 encoding as a workaround: '
+                'encode on the host and type a decode command (e.g. `echo <b64> | base64 -d`) on the target.'
             ),
             inputSchema={
                 "type": "object",
@@ -116,7 +119,7 @@ async def list_tools() -> list[Tool]:
                     },
                     "raw": {
                         "type": "boolean",
-                        "description": "If true, disable all {tag} interpretation. Newline chars (\\n) become Enter key presses. Default: false.",
+                        "description": "If true, disable all {tag} interpretation. Actual line breaks (LF, CRLF, CR) become Enter. In JSON, \\n is decoded into a line break and becomes Enter; \\\\n types literal backslash + n. Default: false.",
                     },
                     "char_delay_ms": {
                         "type": "integer",
@@ -368,6 +371,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
             text = arguments["text"]
             char_delay = arguments.get("char_delay_ms")
             raw = arguments.get("raw", False)
+            validate_chars(text)
             result = client.type_text(text, char_delay, raw=raw)
             return [TextContent(type="text", text=f"Typed {len(text)} characters")]
 
@@ -458,6 +462,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent | 
             wait_seconds = arguments.get("wait_seconds", 1.0)
 
             # Raw mode: no tag interpretation for command text
+            validate_chars(command)
             client.type_text(command, raw=True)
             await asyncio.sleep(0.1)
             client.send_key("enter")
