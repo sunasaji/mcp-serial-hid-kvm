@@ -115,7 +115,7 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text with optional {tag} sequences. Tags: {enter}, {tab}, {escape}, {backspace}, {delete}, {up}, {down}, {left}, {right}, {home}, {end}, {pageup}, {pagedown}, {space}, {f1}-{f12}, {0xNN} for raw HID keycodes. Modifiers: {ctrl+c}, {alt+f4}, {shift+tab}. Only recognized key names are treated as tags; other braces pass through literally.",
+                        "description": "Text with optional {tag} sequences. Tags: {enter}/{return}, {space}, {tab}, {backspace}, {delete}, {insert}, {escape}/{esc}, {up}, {down}, {left}, {right}, {home}, {end}, {pageup}, {pagedown}, {f1}-{f12}, {capslock}, {numlock}, {scrolllock}, {printscreen}, {pause}, {0xNN} for raw HID keycodes (0x00-0xFF). Modifiers: ctrl/lctrl/rctrl, shift/lshift/rshift, alt/lalt/ralt, win/lwin/rwin/gui/super/meta — combine with +: {ctrl+c}, {alt+f4}, {ctrl+shift+del}, {shift+0x87}. Only recognized key names are treated as tags; other braces pass through literally.",
                     },
                     "raw": {
                         "type": "boolean",
